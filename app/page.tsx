@@ -1,0 +1,14 @@
+'use client';
+import {useState} from 'react';
+import {estimate,roofArea} from '../lib/calculation-engine';
+export default function Page(){
+const [mode,setMode]=useState('roof');const [direct,setDirect]=useState(false);const [shape,setShape]=useState('gable');
+const [v,setV]=useState({length:12,width:8,overL:0.5,overW:0.5,pitch:25,area:120,height:3,openings:0,waste:10,cover:0.76,sheet:6});
+const field=(key:keyof typeof v,label:string)=><label key={key}>{label}<input type="number" min="0" step="0.01" value={Number.isNaN(v[key])?'':v[key]} onChange={e=>setV({...v,[key]:e.target.valueAsNumber})}/></label>;
+const area=direct?v.area:mode==='roof'?roofArea(v.length,v.width,v.overL,v.overW,shape==='flat'?0:v.pitch):v.length>0&&v.height>0&&v.openings>=0?v.length*v.height-v.openings:NaN;
+const result=estimate(area,v.waste,v.cover,v.sheet);
+return <main><header><small>SMART MATERIAL CALCULATOR · DEVELOPMENT PROTOTYPE</small><h1>Plan your next project.</h1><p>Estimasi awal kebutuhan atap dan wall cladding.</p></header>
+<section><h2>01 — Aplikasi</h2><label>Jenis aplikasi<select value={mode} onChange={e=>setMode(e.target.value)}><option value="roof">Roofing</option><option value="wall">Wall cladding</option></select></label><label>Metode<select value={direct?'direct':'dimensions'} onChange={e=>setDirect(e.target.value==='direct')}><option value="dimensions">Dimensi</option><option value="direct">Luas langsung</option></select></label>
+{direct?field('area','Luas permukaan (m²)'):mode==='roof'?<><label>Bentuk atap<select value={shape} onChange={e=>setShape(e.target.value)}><option value="gable">Pelana</option><option value="hip">Limas seragam</option><option value="mono">Miring satu sisi</option><option value="flat">Datar (teoretis)</option></select></label><div className="fields">{field('length','Panjang (m)')}{field('width','Lebar (m)')}{field('overL','Overstek ujung panjang (m/sisi)')}{field('overW','Overstek ujung lebar (m/sisi)')}{shape!=='flat'&&field('pitch','Kemiringan (°)')}</div></>:<div className="fields">{field('length','Total panjang dinding (m)')}{field('height','Tinggi (m)')}{field('openings','Luas bukaan (m²)')}</div>}</section>
+<section><h2>02 — Profil simulasi</h2><div className="fields">{field('cover','Lebar efektif (m)')}{field('sheet','Panjang lembar (m)')}{field('waste','Waste (%)')}</div><small>Data simulasi, bukan spesifikasi produk resmi.</small></section>
+<section aria-live="polite"><h2>03 — Hasil estimasi</h2>{result?<><div className="result">{result.material.toFixed(2)} m²</div><p>Luas permukaan: {result.area.toFixed(2)} m²</p><p>Tambahan material: {(result.material-result.area).toFixed(2)} m²</p><p>Lembar ekuivalen: {result.sheets}</p></>:<p>Periksa dimensi dan spesifikasi yang dimasukkan.</p>}<small>Estimasi berbasis luas, bukan cutting list atau persetujuan teknis. Verifikasi kemiringan minimum, sambungan, panjang dan profil dengan Technical Specifier.</small></section></main>}
